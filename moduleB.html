@@ -1,0 +1,1688 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simple Harmonic Motion — Spring Lab</title>
+<style>
+  :root {
+    --bg: #1a1a2e;
+    --panel: rgba(255,255,255,0.05);
+    --border: rgba(255,255,255,0.1);
+    --cyan: #00d4ff;
+    --violet: #7b2cbf;
+    --pink: #7b2cbf;
+    --yellow: #00d4ff;
+    --green: #00d4ff;
+    --text: #ffffff;
+    --muted: #aaaaaa;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  .container { max-width:1500px; margin:0 auto; padding:20px; position:relative; z-index:1; }
+  /* ---- Header ---- */
+  header {
+    text-align:center;
+    padding:30px 0;
+    border-bottom:2px solid rgba(255,255,255,0.1);
+    margin-bottom:30px;
+  }
+  header .tag {
+    display:inline-block;
+    font-size:0.7rem;
+    letter-spacing:0.2em;
+    color:var(--cyan);
+    background:rgba(0,212,255,0.08);
+    padding:4px 14px;
+    border-radius:20px;
+    margin-bottom:16px;
+    border:1px solid rgba(0,212,255,0.2);
+  }
+  header h1 {
+    font-size: 2.5rem;
+    font-weight:700;
+    background: linear-gradient(90deg, #00d4ff, #7b2cbf);
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+    margin-bottom:10px;
+  }
+  header p { color:var(--muted); font-size:1.1rem; }
+  /* ---- Mode Switcher ---- */
+  .mode-bar {
+    display:flex; gap:20px; justify-content:center; flex-wrap:wrap; margin-bottom:30px;
+  }
+  .mode-btn {
+    padding:15px 40px; border:none;
+    border-radius:50px; background:rgba(255,255,255,0.1); color:#fff;
+    font-size:1.1rem; font-weight:600;
+    cursor:pointer; transition:all 0.3s;
+  }
+  .mode-btn.active {
+    background:linear-gradient(90deg, #00d4ff, #7b2cbf);
+    color:#fff; border-color:transparent;
+    box-shadow:0 5px 30px rgba(0,212,255,0.4);
+  }
+  .mode-btn:hover:not(.active) { background:rgba(255,255,255,0.2); }
+  /* ---- Section visibility ---- */
+  .section { display:none; }
+  .section.active { display:block; }
+  /* ---- Layout ---- */
+  .layout {
+    display:grid;
+    grid-template-columns:320px 1fr;
+    gap:24px;
+  }
+  @media(max-width:1100px){.layout{grid-template-columns:1fr;}}
+  /* ---- Panels ---- */
+  .panel {
+    background:rgba(255,255,255,0.05);
+    border:1px solid rgba(255,255,255,0.1);
+    border-radius:20px;
+    padding:25px;
+    backdrop-filter:blur(10px);
+  }
+  .panel h3 {
+    font-size:1.3rem;
+    color:#00d4ff;
+    margin-bottom:20px;
+    display:flex; align-items:center; gap:10px;
+  }
+  /* ---- Controls ---- */
+  .ctrl-group { margin-bottom:25px; }
+  .ctrl-group label {
+    display:flex; justify-content:space-between;
+    font-size:0.95rem; color:#ccc;
+    margin-bottom:8px;
+  }
+  .ctrl-group label span { color:#00d4ff; font-weight:700; }
+  input[type=range] {
+    width:100%; -webkit-appearance:none; height:8px;
+    border-radius:4px; background:rgba(255,255,255,0.2); outline:none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance:none; width:20px; height:20px; border-radius:50%;
+    background:linear-gradient(135deg, #00d4ff, #7b2cbf); cursor:pointer;
+    box-shadow:0 2px 10px rgba(0,212,255,0.5);
+  }
+  select {
+    width:100%; padding:10px 14px;
+    background:rgba(255,255,255,0.05); border:2px solid rgba(255,255,255,0.2);
+    border-radius:10px; color:#fff; font-size:0.9rem; cursor:pointer;
+    transition: border-color 0.3s;
+  }
+  select:focus { outline:none; border-color:#00d4ff; }
+  .btn {
+    width:100%; padding:12px 20px;
+    border:none; border-radius:10px;
+    font-weight:600;
+    font-size:1rem; cursor:pointer; transition:all 0.3s;
+    margin-top:8px;
+  }
+  .btn-primary {
+    background:linear-gradient(90deg, #00d4ff, #7b2cbf);
+    color:#fff;
+  }
+  .btn-primary:hover { box-shadow:0 5px 20px rgba(0,212,255,0.4); transform:translateY(-2px); }
+  .btn-secondary {
+    background:rgba(255,255,255,0.1); color:#fff; border:none;
+  }
+  .btn-secondary:hover { background:rgba(255,255,255,0.2); }
+  /* ---- Canvas area ---- */
+  .vis-col { display:flex; flex-direction:column; gap:20px; }
+  .canvas-wrap {
+    background:rgba(0,0,0,0.3); border-radius:20px; padding:20px;
+    border:1px solid rgba(255,255,255,0.1); position:relative;
+  }
+  .canvas-wrap h4 {
+    font-size:0.95rem;
+    color:#aaa; margin-bottom:12px;
+  }
+  canvas { display:block; width:100%; border-radius:10px; }
+  /* ---- Stats row ---- */
+  .stats-row {
+    display:grid; grid-template-columns:repeat(4,1fr); gap:15px;
+  }
+  @media(max-width:700px){.stats-row{grid-template-columns:repeat(2,1fr);}}
+  .stat-card {
+    background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1);
+    border-radius:15px; padding:20px; text-align:center;
+    transition:transform 0.3s, box-shadow 0.3s;
+  }
+  .stat-card:hover { transform:translateY(-5px); box-shadow:0 10px 30px rgba(0,0,0,0.3); }
+  .stat-card .sval {
+    font-size:1.75rem; font-weight:800; color:#00d4ff;
+  }
+  .stat-card .slabel { font-size:0.85rem; color:#888; margin-top:4px; }
+  /* ---- Equation badge ---- */
+  .eq-box {
+    background:rgba(0,212,255,0.1);
+    border-left:3px solid #00d4ff;
+    padding:14px 18px; border-radius:0 12px 12px 0;
+    margin:16px 0;
+  }
+  .eq-box .eq { font-size:1.05rem; color:#fff; font-weight:600; }
+  .eq-box .eq-desc { font-size:0.8rem; color:#aaa; margin-top:6px; }
+  /* ---- Force arrows overlay ---- */
+  .force-legend {
+    display:flex; flex-wrap:wrap; gap:12px; margin-top:10px;
+  }
+  .force-item {
+    display:flex; align-items:center; gap:7px;
+    font-size:0.8rem; color:#aaa;
+  }
+  .force-dot { width:12px; height:12px; border-radius:50%; }
+  /* ---- Scenario tabs ---- */
+  .scenario-tabs {
+    display:flex; gap:8px; margin-bottom:20px; flex-wrap:wrap;
+  }
+  .sc-tab {
+    padding:8px 18px; border-radius:30px; border:1px solid rgba(255,255,255,0.1);
+    background:rgba(255,255,255,0.05); color:#aaa; font-size:0.85rem;
+    cursor:pointer; transition:all 0.3s;
+  }
+  .sc-tab.active { background:linear-gradient(90deg, #00d4ff, #7b2cbf); color:#fff; border-color:transparent; }
+  .sc-tab:hover:not(.active) { background:rgba(255,255,255,0.15); color:#fff; }
+  /* ---- Description mode ---- */
+  .desc-body { max-width:960px; margin:0 auto; }
+  .desc-section {
+    background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1);
+    border-radius:20px; padding:32px; margin-bottom:24px;
+  }
+  .desc-section h2 {
+    font-size:1.6rem; font-weight:700;
+    background:linear-gradient(90deg, #00d4ff, #7b2cbf);
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+    margin-bottom:20px;
+  }
+  .desc-section h3 { color:#00d4ff; font-size:1.1rem; margin:20px 0 10px; }
+  .desc-section p { color:#ccc; line-height:1.8; font-size:1.02rem; }
+  .big-eq {
+    background:rgba(123,44,191,0.1); border-left:4px solid #7b2cbf;
+    padding:20px 24px; border-radius:0 14px 14px 0; margin:16px 0;
+  }
+  .big-eq .main { font-size:1.4rem; color:#fff; }
+  .big-eq .sub { font-size:0.82rem; color:#aaa; margin-top:8px; line-height:1.6; }
+  .case-grid {
+    display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:16px; margin:20px 0;
+  }
+  .case-card {
+    background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1);
+    border-radius:14px; padding:20px;
+  }
+  .case-card .ci { font-size:2rem; margin-bottom:10px; }
+  .case-card h4 { color:#00d4ff; font-size:0.95rem; margin-bottom:8px; }
+  .case-card p { color:#aaa; font-size:0.82rem; line-height:1.6; }
+  .case-card .formula {
+    font-size:0.85rem;
+    color:#00d4ff; margin-top:8px;
+    background:rgba(0,212,255,0.08); padding:6px 10px; border-radius:6px;
+  }
+  .graphs-2col { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:20px; }
+  @media(max-width:700px){.graphs-2col{grid-template-columns:1fr;}}
+  .anim-controls {
+    display:flex; justify-content:center; gap:14px; margin-top:12px;
+  }
+  .anim-btn {
+    width:44px; height:44px; border-radius:50%; border:none;
+    background:rgba(255,255,255,0.1); color:#fff;
+    font-size:1.1rem; cursor:pointer; transition:all 0.3s;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .anim-btn:hover { background:rgba(0,212,255,0.2); color:#00d4ff; }
+  .info-overlay {
+    position:absolute; top:16px; right:16px;
+    background:rgba(0,0,0,0.5); padding:10px 14px;
+    border-radius:10px;
+    font-size:0.72rem; color:#aaa; line-height:1.8;
+    pointer-events:none;
+  }
+  .info-overlay span { color:#00d4ff; }
+  .checkbox-row {
+    display:flex; align-items:center; gap:10px;
+    font-size:0.85rem; color:#aaa; margin-top:10px; cursor:pointer;
+  }
+  .checkbox-row input { accent-color:#00d4ff; width:16px; height:16px; cursor:pointer; }
+  .separator { border:none; border-top:1px solid rgba(255,255,255,0.1); margin:20px 0; }
+
+  /* ---- PhyWorld Shared Navbar ---- */
+  .pw-navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 36px;
+    position: sticky;
+    top: 0;
+    z-index: 200;
+    background: transparent;
+  }
+  .pw-logo {
+    font-size: 1.75rem;
+    font-weight: 900;
+    color: #00d4ff;
+    letter-spacing: 1px;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0;
+    font-family: 'Segoe UI', sans-serif;
+  }
+  .pw-nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .pw-mod-btn {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.15);
+    background: rgba(255,255,255,0.07);
+    backdrop-filter: blur(10px);
+    color: #fff;
+    font-size: 1.15rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+  }
+  .pw-mod-btn:hover {
+    transform: translateY(-2px) scale(1.08);
+    background: rgba(0,212,255,0.15);
+    border-color: rgba(0,212,255,0.5);
+    box-shadow: 0 0 18px rgba(0,212,255,0.35);
+  }
+  .pw-mod-btn.active-a {
+    background: rgba(0,212,255,0.22);
+    border-color: #00d4ff;
+    box-shadow: 0 0 22px rgba(0,212,255,0.55), inset 0 0 10px rgba(0,212,255,0.12);
+  }
+  .pw-mod-btn.active-b {
+    background: rgba(123,44,191,0.25);
+    border-color: #7b2cbf;
+    box-shadow: 0 0 22px rgba(123,44,191,0.6), inset 0 0 10px rgba(123,44,191,0.12);
+  }
+  .pw-back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    margin: 16px 0 0 36px;
+    padding: 9px 20px;
+    border-radius: 30px;
+    border: 1px solid rgba(0,212,255,0.3);
+    background: rgba(0,212,255,0.08);
+    color: #00d4ff;
+    font-size: 0.88rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(6px);
+  }
+  .pw-back-btn:hover {
+    background: rgba(0,212,255,0.18);
+    border-color: #00d4ff;
+    box-shadow: 0 0 14px rgba(0,212,255,0.3);
+    transform: translateX(-3px);
+  }
+  @media (max-width: 600px) {
+    .pw-navbar { padding: 12px 16px; }
+    .pw-logo { font-size: 1.25rem; }
+    .pw-mod-btn { width: 36px; height: 36px; font-size: 1rem; }
+    .pw-back-btn { margin-left: 16px; }
+  }
+</style>
+</head>
+<body>
+<!-- PhyWorld Navbar -->
+<nav class="pw-navbar">
+  <a href="index.html" class="pw-logo">⚡PhyWorld</a>
+  <div class="pw-nav-actions">
+    <a href="moduleA.html" class="pw-mod-btn" title="Module A — Projectile Motion">🚀</a>
+    <a href="moduleB.html" class="pw-mod-btn active-b" title="Module B — Simple Harmonic Motion">🎵</a>
+  </div>
+</nav>
+<a href="index.html" class="pw-back-btn">← Back to Home</a>
+
+<div class="container">
+<header>
+  <div class="tag">PHYSICS LAB · SPRING DYNAMICS</div>
+  <h1>Simple Harmonic Motion</h1>
+  // spring · block · oscillation · force · energy
+</header>
+<div class="mode-bar">
+  <button class="mode-btn active" onclick="setMode('sim')">⚡ Live Simulator</button>
+  <button class="mode-btn" onclick="setMode('forces')">🎯 Force Explorer</button>
+  <button class="mode-btn" onclick="setMode('graphs')">📈 Graph Lab</button>
+  <button class="mode-btn" onclick="setMode('desc')">📖 Deep Dive</button>
+</div>
+<!-- ===================== SIMULATOR ===================== -->
+<div id="sec-sim" class="section active">
+  <div class="layout">
+    <div class="ctrl-col">
+      <div class="panel">
+        <h3>// scenario</h3>
+        <div class="scenario-tabs">
+          <button class="sc-tab active" onclick="setScenario('free',this)">Free</button>
+          <button class="sc-tab" onclick="setScenario('friction',this)">Friction</button>
+          <button class="sc-tab" onclick="setScenario('stacked',this)">Stacked</button>
+          <button class="sc-tab" onclick="setScenario('vertical',this)">Vertical</button>
+          <button class="sc-tab" onclick="setScenario('coupled',this)">Coupled</button>
+        </div>
+        <div id="scenario-desc" class="eq-box" style="margin-bottom:16px">
+          <div class="eq">F = -kx</div>
+          <div class="eq-desc">Ideal spring-mass, no friction. Pure SHM.</div>
+        </div>
+        <h3>// parameters</h3>
+        <div class="ctrl-group">
+          <label>Spring Constant k <span id="k-val">40 N/m</span></label>
+          <input type=range id="k-slider" min="5" max="200" value="40" step="1" oninput="sliderUpdate()">
+        </div>
+        <div class="ctrl-group">
+          <label>Mass m <span id="m-val">1.0 kg</span></label>
+          <input type=range id="m-slider" min="0.2" max="10" value="1" step="0.1" oninput="sliderUpdate()">
+        </div>
+        <div class="ctrl-group">
+          <label>Amplitude A <span id="a-val">1.0 m</span></label>
+          <input type=range id="a-slider" min="0.1" max="3" value="1" step="0.05" oninput="sliderUpdate()">
+        </div>
+        <div class="ctrl-group" id="damp-ctrl">
+          <label>Damping b <span id="b-val">0.0 Ns/m</span></label>
+          <input type=range id="b-slider" min="0" max="5" value="0" step="0.1" oninput="sliderUpdate()">
+        </div>
+        <div class="ctrl-group" id="mu-ctrl" style="display:none">
+          <label>Friction μ <span id="mu-val">0.30</span></label>
+          <input type=range id="mu-slider" min="0.05" max="0.8" value="0.3" step="0.01" oninput="sliderUpdate()">
+        </div>
+        <div class="ctrl-group" id="m2-ctrl" style="display:none">
+          <label>Top Block m₂ <span id="m2-val">0.5 kg</span></label>
+          <input type=range id="m2-slider" min="0.1" max="5" value="0.5" step="0.1" oninput="sliderUpdate()">
+        </div>
+        <hr class="separator">
+        <div class="checkbox-row"><input type=checkbox id="showForce" checked onchange="sliderUpdate()"> Show force arrows</div>
+        <div class="checkbox-row"><input type=checkbox id="showEnergy" checked onchange="sliderUpdate()"> Show energy bars</div>
+        <div class="checkbox-row"><input type=checkbox id="showTrace" checked onchange="sliderUpdate()"> Show trace path</div>
+        <hr class="separator">
+        <button class="btn btn-primary" onclick="togglePlay()">▶ Play / Pause</button>
+        <button class="btn btn-secondary" onclick="resetSim()">↺ Reset</button>
+      </div>
+    </div>
+    <div class="vis-col">
+      <div class="stats-row">
+        <div class="stat-card"><div class="sval" id="st-x">0.00</div><div class="slabel">x (m)</div></div>
+        <div class="stat-card"><div class="sval" id="st-v">0.00</div><div class="slabel">v (m/s)</div></div>
+        <div class="stat-card"><div class="sval" id="st-f">0.00</div><div class="slabel">F (N)</div></div>
+        <div class="stat-card"><div class="sval" id="st-pe">0.00</div><div class="slabel">PE (J)</div></div>
+      </div>
+      <div class="canvas-wrap" style="position:relative">
+        <h4>// spring–mass simulation</h4>
+        <canvas id="simCanvas" height="280"></canvas>
+        <div class="info-overlay" id="simInfo">
+          ω = <span id="info-omega">?</span> rad/s
+
+          T = <span id="info-T">?</span> s
+
+          f = <span id="info-f">?</span> Hz
+        </div>
+      </div>
+      <div class="canvas-wrap">
+        <h4>// x(t) — displacement vs time</h4>
+        <canvas id="xtCanvas" height="160"></canvas>
+      </div>
+      <div class="canvas-wrap">
+        <h4>// energy — KE / PE / Total</h4>
+        <canvas id="energyCanvas" height="120"></canvas>
+      </div>
+      <div class="force-legend">
+        <div class="force-item"><div class="force-dot" style="background:#f72585"></div>Spring Force F = -kx</div>
+        <div class="force-item"><div class="force-dot" style="background:#f9c74f"></div>Damping F = -bv</div>
+        <div class="force-item"><div class="force-dot" style="background:#43ea80"></div>Friction</div>
+        <div class="force-item"><div class="force-dot" style="background:#00ffe7"></div>Net Force</div>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- ===================== FORCE EXPLORER ===================== -->
+<div id="sec-forces" class="section">
+  <div class="layout">
+    <div class="ctrl-col">
+      <div class="panel">
+        <h3>// force analysis</h3>
+        <div class="ctrl-group">
+          <label>Position x <span id="fe-x-val">0.00 m</span></label>
+          <input type=range id="fe-x" min="-3" max="3" value="0" step="0.01" oninput="updateForceExplorer()">
+        </div>
+        <div class="ctrl-group">
+          <label>Velocity v <span id="fe-v-val">0.00 m/s</span></label>
+          <input type=range id="fe-v" min="-5" max="5" value="0" step="0.05" oninput="updateForceExplorer()">
+        </div>
+        <div class="ctrl-group">
+          <label>Spring k <span id="fe-k-val">40 N/m</span></label>
+          <input type=range id="fe-k" min="5" max="200" value="40" step="1" oninput="updateForceExplorer()">
+        </div>
+        <div class="ctrl-group">
+          <label>Damping b <span id="fe-b-val">0.0 Ns/m</span></label>
+          <input type=range id="fe-b" min="0" max="5" value="0" step="0.1" oninput="updateForceExplorer()">
+        </div>
+        <div class="ctrl-group">
+          <label>Friction μ <span id="fe-mu-val">0.00</span></label>
+          <input type=range id="fe-mu" min="0" max="0.8" value="0" step="0.01" oninput="updateForceExplorer()">
+        </div>
+        <div class="ctrl-group">
+          <label>Mass m <span id="fe-m-val">1.0 kg</span></label>
+          <input type=range id="fe-m" min="0.2" max="10" value="1" step="0.1" oninput="updateForceExplorer()">
+        </div>
+        <hr class="separator">
+        <div class="eq-box">
+          <div class="eq" id="fe-eq">F_net = 0.00 N</div>
+          <div class="eq-desc">ma = -kx - bv ± f_friction</div>
+        </div>
+        <div id="fe-breakdown" style="font-family:'Space Mono',monospace; font-size:0.78rem; color:var(--muted); line-height:2;"></div>
+      </div>
+    </div>
+    <div class="vis-col">
+      <div class="canvas-wrap" style="position:relative">
+        <h4>// free body diagram</h4>
+        <canvas id="fbdCanvas" height="420"></canvas>
+      </div>
+      <div class="canvas-wrap">
+        <h4>// force vs displacement (F–x graph)</h4>
+        <canvas id="fxCanvas" height="200"></canvas>
+      </div>
+      <div class="canvas-wrap">
+        <h4>// phase space (v vs x)</h4>
+        <canvas id="phaseCanvas" height="200"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- ===================== GRAPH LAB ===================== -->
+<div id="sec-graphs" class="section">
+  <div class="layout">
+    <div class="ctrl-col">
+      <div class="panel">
+        <h3>// graph settings</h3>
+        <div class="ctrl-group">
+          <label>Spring k <span id="gl-k-val">40 N/m</span></label>
+          <input type=range id="gl-k" min="5" max="200" value="40" step="1" oninput="updateGraphs()">
+        </div>
+        <div class="ctrl-group">
+          <label>Mass m <span id="gl-m-val">1.0 kg</span></label>
+          <input type=range id="gl-m" min="0.2" max="10" value="1" step="0.1" oninput="updateGraphs()">
+        </div>
+        <div class="ctrl-group">
+          <label>Amplitude A <span id="gl-a-val">1.0 m</span></label>
+          <input type=range id="gl-a" min="0.1" max="3" value="1" step="0.05" oninput="updateGraphs()">
+        </div>
+        <div class="ctrl-group">
+          <label>Damping b <span id="gl-b-val">0.0 Ns/m</span></label>
+          <input type=range id="gl-b" min="0" max="6" value="0" step="0.1" oninput="updateGraphs()">
+        </div>
+        <hr class="separator">
+        <div class="eq-box">
+          <div class="eq">x(t) = Ae^(−bt/2m)cos(ωt+φ)</div>
+          <div class="eq-desc">General damped SHM equation</div>
+        </div>
+        <div style="font-family:'Space Mono',monospace; font-size:0.8rem; color:var(--muted); line-height:2;">
+          ω₀ = √(k/m)  |  <span style="color:var(--cyan)" id="gl-omega">?</span>
+
+          T = 2π/ω  |  <span style="color:var(--yellow)" id="gl-T">?</span>
+
+          f = 1/T  |  <span style="color:var(--pink)" id="gl-freq">?</span>
+        </div>
+      </div>
+    </div>
+    <div class="vis-col">
+      <div class="graphs-2col">
+        <div class="canvas-wrap">
+          <h4>// x(t) displacement</h4>
+          <canvas id="g-xt" height="180"></canvas>
+        </div>
+        <div class="canvas-wrap">
+          <h4>// v(t) velocity</h4>
+          <canvas id="g-vt" height="180"></canvas>
+        </div>
+        <div class="canvas-wrap">
+          <h4>// a(t) acceleration</h4>
+          <canvas id="g-at" height="180"></canvas>
+        </div>
+        <div class="canvas-wrap">
+          <h4>// energy vs time</h4>
+          <canvas id="g-et" height="180"></canvas>
+        </div>
+        <div class="canvas-wrap">
+          <h4>// F(t) force vs time</h4>
+          <canvas id="g-ft" height="180"></canvas>
+        </div>
+        <div class="canvas-wrap">
+          <h4>// phase portrait (v vs x)</h4>
+          <canvas id="g-phase" height="180"></canvas>
+        </div>
+        <div class="canvas-wrap">
+          <h4>// T vs m (period–mass curve)</h4>
+          <canvas id="g-tm" height="180"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- ===================== DESCRIPTION ===================== -->
+<div id="sec-desc" class="section">
+  <div class="desc-body">
+    <div class="desc-section">
+      <h2>What is Simple Harmonic Motion?</h2>
+      Simple Harmonic Motion (SHM) is the most fundamental type of periodic motion, where a restoring force always acts toward the equilibrium position and is directly proportional to the displacement. It appears everywhere — from the atoms in a crystal lattice to the pendulum of a clock, from guitar strings to the electrons in a radio antenna.
+      <div class="big-eq">
+        <div class="main">F = −kx  ⟹  mẍ + kx = 0</div>
+        <div class="sub">k = spring constant (N/m) · x = displacement · m = mass
+Solution: x(t) = A·cos(ωt + φ)  where ω = √(k/m)</div>
+      </div>
+      The negative sign is the key: the force always opposes the displacement. If the block is pulled right (+x), the spring pulls it left (−F). This creates oscillation.
+    </div>
+    <div class="desc-section">
+      <h2>Core Equations</h2>
+      <div class="case-grid">
+        <div class="case-card"><div class="ci">📍</div><h4>Displacement</h4>Position as a function of time — a cosine wave.<div class="formula">x(t) = A·cos(ωt + φ)</div></div>
+        <div class="case-card"><div class="ci">⚡</div><h4>Velocity</h4>Velocity is max at equilibrium, zero at extremes.<div class="formula">v(t) = −Aω·sin(ωt + φ)</div></div>
+        <div class="case-card"><div class="ci">🔄</div><h4>Acceleration</h4>Always opposite to displacement; max at extremes.<div class="formula">a(t) = −Aω²·cos(ωt)</div></div>
+        <div class="case-card"><div class="ci">⏱️</div><h4>Period</h4>Depends only on mass and spring constant, NOT amplitude!<div class="formula">T = 2π√(m/k)</div></div>
+        <div class="case-card"><div class="ci">💡</div><h4>Angular Frequency</h4>How fast the block oscillates in radians per second.<div class="formula">ω = √(k/m) = 2π/T</div></div>
+        <div class="case-card"><div class="ci">⚖️</div><h4>Energy</h4>Total mechanical energy is conserved; converts KE ↔ PE.<div class="formula">E = ½kA² = ½mv² + ½kx²</div></div>
+      </div>
+    </div>
+    <div class="desc-section">
+      <h2>Scenario Zoo 🦁</h2>
+      SHM appears in many different physical configurations. Here are the key cases:
+      <div class="case-grid">
+        <div class="case-card"><div class="ci">🧱</div><h4>Free Oscillation</h4>Ideal mass-spring with no friction. Energy is perfectly conserved; oscillation never stops.<div class="formula">ω = √(k/m)</div></div>
+        <div class="case-card"><div class="ci">🌊</div><h4>Damped Oscillation</h4>Viscous friction or air resistance removes energy. Amplitude decays exponentially.<div class="formula">x = Ae^(−bt/2m)cos(ω_d·t)</div></div>
+        <div class="case-card"><div class="ci">📦📦</div><h4>Stacked Blocks</h4>A second block sits on top. If inter-block friction is insufficient, the top block slides — changing the effective mass in the equation.<div class="formula">f_max = μ·m₂·ω²·A</div></div>
+        <div class="case-card"><div class="ci">⬇️</div><h4>Vertical Spring</h4>Gravity just shifts the equilibrium position downward by mg/k. The SHM around new equilibrium is identical to horizontal case!<div class="formula">x_eq = mg/k (shift)</div></div>
+        <div class="case-card"><div class="ci">🔗</div><h4>Coupled Springs</h4>Two masses connected by springs exhibit normal modes — symmetric and antisymmetric — with different frequencies.<div class="formula">ω₁=√(k/m), ω₂=√(3k/m)</div></div>
+        <div class="case-card"><div class="ci">🏔️</div><h4>Dry Friction</h4>Coulomb friction (floor friction) creates a deadband near equilibrium — the block stops before returning to x = 0.<div class="formula">x_stop = ±μmg/k</div></div>
+      </div>
+    </div>
+    <div class="desc-section">
+      <h2>Reading the Graphs</h2>
+      <div class="graphs-2col">
+        <div class="canvas-wrap"><h4>// all four: x, v, a, F vs time</h4><canvas id="desc-allgraph" height="220"></canvas></div>
+        <div class="canvas-wrap"><h4>// energy exchange</h4><canvas id="desc-energy" height="220"></canvas></div>
+      </div>
+      <p style="margin-top:16px;">Notice that <span style="color:var(--cyan)">displacement x</span> and <span style="color:var(--pink)">acceleration a</span> are always exactly out of phase (180°). Velocity leads x by 90°. This 90° relationship is the fingerprint of SHM.
+    </div>
+    <div class="desc-section">
+      <h2>The Damping Spectrum</h2>
+      <div class="case-grid">
+        <div class="case-card"><div class="ci">✨</div><h4>Underdamped</h4>b² < 4mk — oscillates with decreasing amplitude. Seen in car suspensions (just barely), guitar strings.<div class="formula">ω_d = √(ω₀²−(b/2m)²)</div></div>
+        <div class="case-card"><div class="ci">⚖️</div><h4>Critically Damped</h4>b² = 4mk — returns to equilibrium fastest without oscillating. Ideal for doors, shock absorbers.<div class="formula">b_c = 2√(mk)</div></div>
+        <div class="case-card"><div class="ci">🐌</div><h4>Overdamped</h4>b² > 4mk — returns slowly without oscillating. Like a piston in thick oil.<div class="formula">x(t)=e^(−bt/2m)(C₁e^γt+C₂e^−γt)</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+</div><!-- end container -->
+<script>
+// ==================== STATE ====================
+let scenario = 'free';
+let playing = true;
+let t = 0;
+let dt = 1/120;
+let traceX = [], traceT = [];
+let simInterval = null;
+const g = 9.8;
+function getParams() {
+  return {
+    k: +document.getElementById('k-slider').value,
+    m: +document.getElementById('m-slider').value,
+    A: +document.getElementById('a-slider').value,
+    b: +document.getElementById('b-slider').value,
+    mu: +document.getElementById('mu-slider').value,
+    m2: +document.getElementById('m2-slider').value
+  };
+}
+function sliderUpdate() {
+  const p = getParams();
+  document.getElementById('k-val').textContent = p.k + ' N/m';
+  document.getElementById('m-val').textContent = p.m.toFixed(1) + ' kg';
+  document.getElementById('a-val').textContent = p.A.toFixed(2) + ' m';
+  document.getElementById('b-val').textContent = p.b.toFixed(1) + ' Ns/m';
+  document.getElementById('mu-val').textContent = p.mu.toFixed(2);
+  document.getElementById('m2-val').textContent = p.m2.toFixed(1) + ' kg';
+  updateInfoPanel(p);
+}
+function updateInfoPanel(p) {
+  const om = Math.sqrt(p.k / p.m);
+  const T = 2 * Math.PI / om;
+  document.getElementById('info-omega').textContent = om.toFixed(2);
+  document.getElementById('info-T').textContent = T.toFixed(3);
+  document.getElementById('info-f').textContent = (1/T).toFixed(3);
+}
+// ==================== SIMULATION LOOP ====================
+let simX = 1, simV = 0;
+function resetSim() {
+  t = 0; traceX = []; traceT = [];
+  const p = getParams();
+  simX = p.A; simV = 0;
+}
+function setMode(m) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('sec-' + m).classList.add('active');
+  document.querySelectorAll('.mode-btn')[['sim','forces','graphs','desc'].indexOf(m)].classList.add('active');
+  if (m === 'graphs') updateGraphs();
+  if (m === 'forces') { updateForceExplorer(); }
+  if (m === 'desc') drawDescGraphs();
+}
+function togglePlay() { playing = !playing; }
+function setScenario(sc, el) {
+  scenario = sc;
+  document.querySelectorAll('.sc-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  const descs = {
+    free: {eq:'F = −kx', desc:'Ideal spring-mass, no friction. Pure SHM.'},
+    friction: {eq:'F = −kx − bv', desc:'Viscous damping. Amplitude decays over time.'},
+    stacked: {eq:'Constraint: f ≤ μm₂g', desc:'Top block may slip if max static friction exceeded.'},
+    vertical: {eq:'Equilibrium at x = mg/k', desc:'Gravity shifts equilibrium; SHM around new rest point.'},
+    coupled: {eq:'ω₁=√(k/m), ω₂=√(3k/m)', desc:'Two normal modes with distinct frequencies.'}
+  };
+  const d = descs[sc];
+  document.getElementById('scenario-desc').innerHTML = `<div class="eq">${d.eq}</div><div class="eq-desc">${d.desc}</div>`;
+  document.getElementById('mu-ctrl').style.display = (sc === 'friction') ? 'block' : 'none';
+  document.getElementById('m2-ctrl').style.display = (sc === 'stacked') ? 'block' : 'none';
+  resetSim();
+}
+// ==================== DRAW SIM ====================
+function drawSim() {
+  const canvas = document.getElementById('simCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const p = getParams();
+  canvas.width = canvas.offsetWidth || 800;
+  const W = canvas.width, H = canvas.height || 280;
+  if (playing) {
+    // Integrate motion
+    let totalM = p.m + (scenario === 'stacked' ? p.m2 : 0);
+    if (scenario === 'vertical') totalM = p.m;
+    let springF = -p.k * simX;
+    let dampF = (scenario === 'friction' || scenario === 'stacked') ? -p.b * simV : 0;
+    let frictF = 0;
+    if (scenario === 'friction') frictF = -Math.sign(simV) * p.mu * totalM * g * 0.05;
+    let a = (springF + dampF + frictF) / totalM;
+    simV += a * dt;
+    simX += simV * dt;
+    t += dt;
+    traceX.push(simX);
+    traceT.push(t);
+    if (traceX.length > 800) { traceX.shift(); traceT.shift(); }
+  }
+  // BG
+  ctx.fillStyle = '#0d1b3e';
+  ctx.fillRect(0, 0, W, H);
+  const cx = W * 0.55;
+  const cy = scenario === 'vertical' ? H * 0.35 : H / 2;
+  const wallX = 80;
+  const blockSize = scenario === 'stacked' ? 50 : 44;
+  const pixPerM = 100;
+  const bx = cx + simX * pixPerM;
+  // Wall
+  ctx.fillStyle = '#2a2a4a';
+  ctx.fillRect(wallX - 20, cy - 80, 20, 160);
+  ctx.strokeStyle = '#444'; ctx.lineWidth = 2;
+  for (let i = -70; i < 80; i += 18) {
+    ctx.beginPath(); ctx.moveTo(wallX - 20, cy + i);
+    ctx.lineTo(wallX - 38, cy + i + 14); ctx.stroke();
+  }
+  // Spring (zigzag)
+  const springEnd = bx - blockSize / 2;
+  const springStart = wallX;
+  const coils = 10;
+  const coilH = 14;
+  ctx.beginPath();
+  ctx.strokeStyle = '#00ffe7'; ctx.lineWidth = 2.5;
+  ctx.shadowColor = '#00ffe7'; ctx.shadowBlur = 8;
+  ctx.moveTo(springStart, cy);
+  const segLen = (springEnd - springStart) / (coils * 2);
+  for (let i = 0; i <= coils * 2; i++) {
+    const px = springStart + i * segLen;
+    const py = cy + (i % 2 === 0 ? 0 : (i % 4 === 1 ? -coilH : coilH));
+    ctx.lineTo(px, py);
+  }
+  ctx.stroke(); ctx.shadowBlur = 0;
+  // Floor/ceiling guide line
+  ctx.strokeStyle = 'rgba(255,255,255,0.05)'; ctx.lineWidth = 1; ctx.setLineDash([4,4]);
+  ctx.beginPath(); ctx.moveTo(wallX, cy + 36); ctx.lineTo(W - 20, cy + 36); ctx.stroke();
+  ctx.setLineDash([]);
+  // Equilibrium marker
+  ctx.strokeStyle = 'rgba(249,199,79,0.4)'; ctx.lineWidth = 1; ctx.setLineDash([6,4]);
+  ctx.beginPath(); ctx.moveTo(cx, cy - 60); ctx.lineTo(cx, cy + 60); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = 'rgba(249,199,79,0.6)'; ctx.font = '10px Space Mono,monospace';
+  ctx.fillText('x=0', cx + 4, cy - 64);
+  // Vertical spring extra
+  if (scenario === 'vertical') {
+    ctx.strokeStyle = '#9b5de5'; ctx.lineWidth = 1; ctx.setLineDash([4,4]);
+    ctx.beginPath(); ctx.moveTo(bx, cy + blockSize/2); ctx.lineTo(bx, H - 20); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#9b5de5'; ctx.font = '11px Space Mono';
+    ctx.fillText('gravity ↓', bx + 10, H - 30);
+  }
+  // Block (main)
+  const grad = ctx.createLinearGradient(bx - blockSize/2, cy - blockSize/2, bx + blockSize/2, cy + blockSize/2);
+  grad.addColorStop(0, '#2a2a6a'); grad.addColorStop(1, '#1a1a4a');
+  ctx.fillStyle = grad;
+  ctx.strokeStyle = '#9b5de5'; ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.roundRect(bx - blockSize/2, cy - blockSize/2, blockSize, blockSize, 6);
+  ctx.fill(); ctx.stroke();
+  ctx.fillStyle = '#fff'; ctx.font = 'bold 12px Syne,sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText('m', bx, cy + 5);
+  ctx.textAlign = 'left';
+  // Stacked block on top
+  if (scenario === 'stacked') {
+    const p = getParams();
+    const b2 = 36;
+    const grad2 = ctx.createLinearGradient(bx - b2/2, cy - blockSize/2 - b2, bx + b2/2, cy - blockSize/2);
+    grad2.addColorStop(0, '#2a5a2a'); grad2.addColorStop(1, '#1a3a1a');
+    ctx.fillStyle = grad2; ctx.strokeStyle = '#43ea80'; ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.roundRect(bx - b2/2, cy - blockSize/2 - b2, b2, b2, 4);
+    ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#43ea80'; ctx.font = 'bold 10px Syne'; ctx.textAlign = 'center';
+    ctx.fillText('m₂', bx, cy - blockSize/2 - b2/2 + 5);
+    ctx.textAlign = 'left';
+    // Friction arrows on top block
+    if (document.getElementById('showForce').checked && Math.abs(simV) > 0.01) {
+      const fDir = -Math.sign(simV);
+      drawArrow(ctx, bx, cy - blockSize/2 - b2/2, bx + fDir * 35, cy - blockSize/2 - b2/2, '#43ea80', 'f_μ');
+    }
+  }
+  // Displacement arrow
+  if (Math.abs(simX) > 0.05) {
+    ctx.strokeStyle = 'rgba(255,255,255,0.25)'; ctx.lineWidth = 1; ctx.setLineDash([3,3]);
+    ctx.beginPath(); ctx.moveTo(cx, cy + blockSize/2 + 14); ctx.lineTo(bx, cy + blockSize/2 + 14); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#fff'; ctx.font = '10px Space Mono'; ctx.textAlign = 'center';
+    ctx.fillText('x=' + simX.toFixed(2), (cx + bx)/2, cy + blockSize/2 + 30);
+    ctx.textAlign = 'left';
+  }
+  // Force arrows
+  if (document.getElementById('showForce') && document.getElementById('showForce').checked) {
+    const springF = -p.k * simX;
+    const scaleF = 2;
+    drawArrow(ctx, bx, cy, bx + springF * scaleF, cy, '#f72585', 'F_s');
+    if (Math.abs(simV) > 0.05 && (scenario === 'friction' || scenario === 'stacked')) {
+      const dampF = -p.b * simV;
+      drawArrow(ctx, bx, cy - 12, bx + dampF * scaleF, cy - 12, '#f9c74f', 'F_d');
+    }
+  }
+  // Energy bar
+  if (document.getElementById('showEnergy') && document.getElementById('showEnergy').checked) {
+    const KE = 0.5 * p.m * simV * simV;
+    const PE = 0.5 * p.k * simX * simX;
+    const E = KE + PE;
+    const maxE = 0.5 * p.k * p.A * p.A;
+    const barW = 100, barH = 12;
+    const bary = H - 30, barx = W - 160;
+    ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(barx - 5, bary - 35, 140, 55);
+    ctx.fillStyle = '#f72585'; ctx.fillRect(barx, bary - 25, (PE/maxE)*barW, barH);
+    ctx.fillStyle = '#00ffe7'; ctx.fillRect(barx, bary - 10, (KE/maxE)*barW, barH);
+    ctx.fillStyle = '#aaa'; ctx.font = '9px Space Mono'; 
+    ctx.fillText('PE', barx - 25, bary - 14);
+    ctx.fillText('KE', barx - 25, bary + 1);
+  }
+  // Stats
+  const fe = -p.k * simX;
+  document.getElementById('st-x').textContent = simX.toFixed(3);
+  document.getElementById('st-v').textContent = simV.toFixed(3);
+  document.getElementById('st-f').textContent = fe.toFixed(2);
+  document.getElementById('st-pe').textContent = (0.5 * p.k * simX * simX).toFixed(3);
+  updateInfoPanel(p);
+  // Draw x(t) trace
+  drawXTTrace();
+  drawEnergyTrace(p);
+}
+function drawArrow(ctx, x1, y1, x2, y2, color, label) {
+  if (Math.abs(x2 - x1) < 2) return;
+  ctx.strokeStyle = color; ctx.lineWidth = 2.5;
+  ctx.shadowColor = color; ctx.shadowBlur = 8;
+  ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+  ctx.shadowBlur = 0;
+  const dx = x2 - x1, dy = y2 - y1;
+  const len = Math.sqrt(dx*dx + dy*dy);
+  const ux = dx/len, uy = dy/len;
+  const hw = 8;
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.moveTo(x2, y2);
+  ctx.lineTo(x2 - hw*ux - hw*0.5*uy, y2 - hw*uy + hw*0.5*ux);
+  ctx.lineTo(x2 - hw*ux + hw*0.5*uy, y2 - hw*uy - hw*0.5*ux);
+  ctx.fill();
+  ctx.fillStyle = color; ctx.font = '10px Space Mono';
+  ctx.fillText(label, x2 + 4, y2 - 4);
+}
+function drawXTTrace() {
+  const canvas = document.getElementById('xtCanvas');
+  if (!canvas) return;
+  canvas.width = canvas.offsetWidth || 800;
+  const ctx = canvas.getContext('2d'), W = canvas.width, H = canvas.height || 160;
+  ctx.fillStyle = '#0d1b3e'; ctx.fillRect(0,0,W,H);
+  const p = getParams();
+  if (traceX.length < 2) return;
+  const showT = 6; // seconds of trace
+  const tMax = traceT[traceT.length-1];
+  const tMin = Math.max(0, tMax - showT);
+  const maxA = p.A * 1.3;
+  const pad = 40;
+  // Axes
+  ctx.strokeStyle = 'rgba(255,255,255,0.1)'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(pad, H/2); ctx.lineTo(W-10, H/2); ctx.stroke();
+  ctx.fillStyle = '#888'; ctx.font = '10px Space Mono';
+  ctx.fillText('t', W-20, H/2-4); ctx.fillText('x', pad-14, 12);
+  ctx.beginPath(); ctx.strokeStyle = '#00ffe7'; ctx.lineWidth = 2;
+  ctx.shadowColor = '#00ffe7'; ctx.shadowBlur = 6;
+  let first = true;
+  for (let i = 0; i < traceX.length; i++) {
+    if (traceT[i] < tMin) continue;
+    const px = pad + (traceT[i] - tMin) / showT * (W - pad - 10);
+    const py = H/2 - (traceX[i] / maxA) * (H/2 - 10);
+    if (first) { ctx.moveTo(px, py); first = false; } else ctx.lineTo(px, py);
+  }
+  ctx.stroke(); ctx.shadowBlur = 0;
+}
+function drawEnergyTrace(p) {
+  const canvas = document.getElementById('energyCanvas');
+  if (!canvas || traceX.length < 2) return;
+  canvas.width = canvas.offsetWidth || 800;
+  const ctx = canvas.getContext('2d'), W = canvas.width, H = canvas.height || 120;
+  ctx.fillStyle = '#0d1b3e'; ctx.fillRect(0,0,W,H);
+  const showT = 6, tMax = traceT[traceT.length-1], tMin = Math.max(0, tMax - showT);
+  const maxE = 0.5 * p.k * p.A * p.A || 1;
+  const pad = 40;
+  // Build velocity from x trace (approximate)
+  const PEs = [], KEs = [], Ts = [];
+  for (let i = 1; i < traceX.length; i++) {
+    if (traceT[i] < tMin) continue;
+    const v = (traceX[i] - traceX[i-1]) / dt;
+    PEs.push(0.5 * p.k * traceX[i] * traceX[i]);
+    KEs.push(0.5 * p.m * v * v);
+    Ts.push(traceT[i]);
+  }
+  if (Ts.length < 2) return;
+  const draw = (arr, color) => {
+    ctx.beginPath(); ctx.strokeStyle = color; ctx.lineWidth = 1.8;
+    let first = true;
+    for (let i = 0; i < Ts.length; i++) {
+      const px = pad + (Ts[i] - tMin) / showT * (W - pad - 10);
+      const py = H - 10 - (arr[i] / maxE) * (H - 20);
+      if (first) { ctx.moveTo(px, py); first = false; } else ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+  };
+  draw(PEs, '#f72585'); draw(KEs, '#00ffe7');
+  // Total
+  ctx.beginPath(); ctx.strokeStyle = '#f9c74f'; ctx.lineWidth = 1.5; ctx.setLineDash([4,3]);
+  for (let i = 0; i < Ts.length; i++) {
+    const px = pad + (Ts[i] - tMin) / showT * (W - pad - 10);
+    const py = H - 10 - ((PEs[i]+KEs[i]) / maxE) * (H - 20);
+    if (i===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
+  }
+  ctx.stroke(); ctx.setLineDash([]);
+  ctx.fillStyle = '#f72585'; ctx.font = '10px Space Mono'; ctx.fillText('PE', 5, 20);
+  ctx.fillStyle = '#00ffe7'; ctx.fillText('KE', 5, 34);
+  ctx.fillStyle = '#f9c74f'; ctx.fillText('E', 5, 48);
+}
+// ==================== FORCE EXPLORER ====================
+function updateForceExplorer() {
+  const x = +document.getElementById('fe-x').value;
+  const v = +document.getElementById('fe-v').value;
+  const k = +document.getElementById('fe-k').value;
+  const b = +document.getElementById('fe-b').value;
+  const mu = +document.getElementById('fe-mu').value;
+  const m = +document.getElementById('fe-m').value;
+  document.getElementById('fe-x-val').textContent = x.toFixed(2) + ' m';
+  document.getElementById('fe-v-val').textContent = v.toFixed(2) + ' m/s';
+  document.getElementById('fe-k-val').textContent = k + ' N/m';
+  document.getElementById('fe-b-val').textContent = b.toFixed(1) + ' Ns/m';
+  document.getElementById('fe-mu-val').textContent = mu.toFixed(2);
+  document.getElementById('fe-m-val').textContent = m.toFixed(1) + ' kg';
+  const Fs = -k * x;
+  const Fd = -b * v;
+  const Ff = -Math.sign(v) * mu * m * g;
+  const Fnet = Fs + Fd + (Math.abs(v) > 0.01 ? Ff : 0);
+  const a = Fnet / m;
+  document.getElementById('fe-eq').textContent = 'F_net = ' + Fnet.toFixed(3) + ' N';
+  document.getElementById('fe-breakdown').innerHTML =
+    `<span style="color:#f72585">F_spring = −kx = ${Fs.toFixed(3)} N</span>
+` +
+    `<span style="color:#f9c74f">F_damp = −bv = ${Fd.toFixed(3)} N</span>
+` +
+    `<span style="color:#43ea80">F_friction = ${(Math.abs(v)>0.01?Ff:0).toFixed(3)} N</span>
+` +
+    `<span style="color:#00ffe7">a = F/m = ${a.toFixed(3)} m/s²</span>`;
+  drawFBD(x, v, Fs, Fd, Ff, Fnet, m);
+  drawFxGraph(k, x);
+  drawPhasePortrait(k, m, b, +document.getElementById('a-slider').value);
+}
+function drawFBD(x, v, Fs, Fd, Ff, Fnet, m) {
+  const canvas = document.getElementById('fbdCanvas');
+  if (!canvas) return;
+  canvas.width = canvas.offsetWidth || 700;
+  const ctx = canvas.getContext('2d'), W = canvas.width, H = canvas.height || 420;
+  ctx.fillStyle = '#0d1b3e'; ctx.fillRect(0,0,W,H);
+
+  // --- Layout constants ---
+  const bx = W / 2, by = H * 0.52, bs = 80; // block center & size
+  const floorY = by + bs/2 + 10;
+  const wallX = 60;
+  const ceilY = by - bs/2 - 10;
+
+  // ---- FLOOR ----
+  ctx.fillStyle = '#1e1e3a';
+  ctx.fillRect(wallX, floorY, W - wallX - 10, 14);
+  ctx.strokeStyle = '#3a3a6a'; ctx.lineWidth = 1.5;
+  // Hatch marks on floor
+  for (let xi = wallX; xi < W - 10; xi += 18) {
+    ctx.beginPath();
+    ctx.moveTo(xi, floorY + 14);
+    ctx.lineTo(xi + 12, floorY);
+    ctx.strokeStyle = '#2a2a50'; ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+  // Floor top line
+  ctx.strokeStyle = '#4a4a80'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(wallX, floorY); ctx.lineTo(W - 10, floorY); ctx.stroke();
+
+  // ---- WALL ----
+  ctx.fillStyle = '#1e1e3a';
+  ctx.fillRect(wallX - 22, ceilY - 30, 22, floorY - ceilY + 30);
+  for (let yi = ceilY - 20; yi < floorY; yi += 18) {
+    ctx.beginPath();
+    ctx.moveTo(wallX - 22, yi);
+    ctx.lineTo(wallX, yi + 14);
+    ctx.strokeStyle = '#2a2a50'; ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+  ctx.strokeStyle = '#4a4a80'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(wallX, ceilY - 30); ctx.lineTo(wallX, floorY); ctx.stroke();
+
+  // ---- SPRING (zigzag from wall to block) ----
+  const springEndX = bx - bs/2;
+  const springStartX = wallX;
+  const springY = by;
+  const coils = 9;
+  const coilH = 13;
+  const segLen = (springEndX - springStartX) / (coils * 2 + 2);
+  ctx.beginPath();
+  ctx.moveTo(springStartX, springY);
+  ctx.lineTo(springStartX + segLen, springY);
+  for (let i = 0; i < coils * 2; i++) {
+    const px = springStartX + segLen + (i + 1) * segLen;
+    const py = springY + (i % 2 === 0 ? -coilH : coilH);
+    ctx.lineTo(px, py);
+  }
+  ctx.lineTo(springEndX, springY);
+  ctx.strokeStyle = '#00ffe7'; ctx.lineWidth = 2.8;
+  ctx.shadowColor = '#00ffe7'; ctx.shadowBlur = 10;
+  ctx.stroke(); ctx.shadowBlur = 0;
+
+  // Spring label
+  ctx.fillStyle = 'rgba(0,255,231,0.55)'; ctx.font = 'bold 12px Space Mono,monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText('k', (springStartX + springEndX)/2, springY - coilH - 8);
+
+  // ---- GROUND CONTACT LINE below block ----
+  ctx.strokeStyle = 'rgba(100,100,180,0.4)'; ctx.lineWidth = 1; ctx.setLineDash([4,4]);
+  ctx.beginPath(); ctx.moveTo(bx - bs/2 - 10, floorY); ctx.lineTo(bx + bs/2 + 10, floorY); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // ---- EQUILIBRIUM LINE ----
+  ctx.strokeStyle = 'rgba(249,199,79,0.35)'; ctx.lineWidth = 1.2; ctx.setLineDash([6,4]);
+  ctx.beginPath(); ctx.moveTo(bx, ceilY - 20); ctx.lineTo(bx, floorY - 2); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = 'rgba(249,199,79,0.6)'; ctx.font = '11px Space Mono,monospace'; ctx.textAlign = 'center';
+  ctx.fillText('x = 0', bx, ceilY - 26);
+
+  // ---- BLOCK (2D flat, clear) ----
+  const bGrad = ctx.createLinearGradient(bx - bs/2, by - bs/2, bx + bs/2, by + bs/2);
+  bGrad.addColorStop(0, '#2a2a7a');
+  bGrad.addColorStop(0.5, '#1e1e5e');
+  bGrad.addColorStop(1, '#12123a');
+  ctx.fillStyle = bGrad;
+  ctx.strokeStyle = '#9b5de5'; ctx.lineWidth = 3;
+  ctx.shadowColor = '#9b5de5'; ctx.shadowBlur = 16;
+  ctx.beginPath();
+  ctx.roundRect(bx - bs/2, by - bs/2, bs, bs, 6);
+  ctx.fill(); ctx.stroke(); ctx.shadowBlur = 0;
+
+  // Block label
+  ctx.fillStyle = '#fff'; ctx.font = 'bold 18px Syne,sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText('m', bx, by + 7);
+  ctx.fillStyle = 'rgba(255,255,255,0.4)'; ctx.font = '11px Space Mono'; ctx.textAlign = 'center';
+  ctx.fillText(m.toFixed(1)+' kg', bx, by + 24);
+
+  // ---- FORCE ARROWS (larger, clearer) ----
+  const scale = 5.5;
+  const arrowLineW = 3.5;
+
+  function drawFBDArrow(fromX, fromY, forceVal, isVertical, color, label, isUp) {
+    const mag = forceVal;
+    if (Math.abs(mag) < 0.05) return;
+    let toX = fromX, toY = fromY;
+    if (!isVertical) {
+      toX = fromX + mag * scale;
+    } else {
+      toY = isUp ? fromY - Math.abs(mag) * scale : fromY + Math.abs(mag) * scale;
+    }
+    const minLen = 28;
+    if (!isVertical && Math.abs(toX - fromX) < minLen) toX = fromX + Math.sign(mag) * minLen;
+    if (isVertical && Math.abs(toY - fromY) < minLen) toY = isUp ? fromY - minLen : fromY + minLen;
+
+    // Shadow glow
+    ctx.strokeStyle = color; ctx.lineWidth = arrowLineW;
+    ctx.shadowColor = color; ctx.shadowBlur = 14;
+    ctx.beginPath(); ctx.moveTo(fromX, fromY); ctx.lineTo(toX, toY); ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    // Arrowhead
+    const dx = toX - fromX, dy = toY - fromY;
+    const len = Math.sqrt(dx*dx + dy*dy);
+    if (len < 1) return;
+    const ux = dx/len, uy = dy/len;
+    const hw = 11, hl = 18;
+    ctx.fillStyle = color;
+    ctx.shadowColor = color; ctx.shadowBlur = 10;
+    ctx.beginPath();
+    ctx.moveTo(toX, toY);
+    ctx.lineTo(toX - hl*ux - hw*uy, toY - hl*uy + hw*ux);
+    ctx.lineTo(toX - hl*ux + hw*uy, toY - hl*uy - hw*ux);
+    ctx.closePath(); ctx.fill(); ctx.shadowBlur = 0;
+
+    // Label
+    ctx.font = 'bold 12px Space Mono,monospace';
+    ctx.fillStyle = color;
+    const lx = !isVertical ? toX + (mag > 0 ? 8 : -8) : toX + 10;
+    const ly = !isVertical ? fromY - 12 : (isUp ? toY - 10 : toY + 18);
+    ctx.textAlign = !isVertical ? (mag > 0 ? 'left' : 'right') : 'left';
+    ctx.fillText(label, lx, ly);
+    // Value
+    ctx.font = '11px Space Mono,monospace';
+    ctx.fillStyle = color + 'cc';
+    ctx.fillText(Math.abs(mag).toFixed(2)+'N', lx, ly + 15);
+  }
+
+  // Spring force (horizontal, from center)
+  drawFBDArrow(bx - bs/2, by, Fs, false, '#f72585', 'F_spring', false);
+
+  // Damping force (horizontal, slightly above)
+  if (Math.abs(Fd) > 0.01) {
+    drawFBDArrow(bx - bs/2, by - 22, Fd, false, '#f9c74f', 'F_damp', false);
+  }
+
+  // Friction force (horizontal, slightly below)
+  if (Math.abs(Ff) > 0.01 && Math.abs(v) > 0.01) {
+    drawFBDArrow(bx - bs/2, by + 22, Ff, false, '#43ea80', 'F_friction', false);
+  }
+
+  // Net force (horizontal, below block — from center)
+  if (Math.abs(Fnet) > 0.01) {
+    drawFBDArrow(bx, by + bs/2 + 32, Fnet, false, '#00ffe7', 'F_net', false);
+  }
+
+  // Normal force (up from top)
+  const N = m * 9.8;
+  drawFBDArrow(bx + 18, by - bs/2, N, true, '#aaaacc', 'N', true);
+
+  // Weight (down from bottom)
+  drawFBDArrow(bx - 18, by + bs/2, N, true, '#888899', 'mg', false);
+
+  // ---- DISPLACEMENT LABEL ----
+  if (Math.abs(x) > 0.02) {
+    ctx.strokeStyle = 'rgba(255,255,255,0.18)'; ctx.lineWidth = 1; ctx.setLineDash([3,4]);
+    ctx.beginPath();
+    ctx.moveTo(bx, floorY - 4); ctx.lineTo(bx + x * scale * 10, floorY - 4);
+    ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = 'rgba(255,255,255,0.55)'; ctx.font = '11px Space Mono'; ctx.textAlign = 'center';
+    ctx.fillText('x = '+x.toFixed(2)+'m', bx + x*scale*5, floorY + 28);
+  }
+
+  // ---- INFO FOOTER ----
+  ctx.fillStyle = 'rgba(255,255,255,0.3)'; ctx.font = '11px Space Mono'; ctx.textAlign = 'left';
+  ctx.fillText('x = '+x.toFixed(3)+'m  |  v = '+v.toFixed(3)+'m/s  |  a = '+(Fnet/m).toFixed(3)+'m/s²', wallX, H - 12);
+  ctx.textAlign = 'left';
+}
+function drawFxGraph(k, currentX) {
+  const canvas = document.getElementById('fxCanvas');
+  if (!canvas) return;
+  canvas.width = canvas.offsetWidth || 700;
+  const ctx = canvas.getContext('2d'), W = canvas.width, H = canvas.height || 200;
+  ctx.fillStyle = '#0d1b3e'; ctx.fillRect(0,0,W,H);
+  const maxX = 3;
+  const pad = {l:56, r:16, t:16, b:36};
+  const gW = W-pad.l-pad.r, gH = H-pad.t-pad.b;
+  const midX = pad.l + gW/2, midY = pad.t + gH/2;
+  const maxF = k*maxX;
+
+  // Grid
+  ctx.strokeStyle = 'rgba(255,255,255,0.05)'; ctx.lineWidth = 1;
+  for (let i=0; i<=4; i++) {
+    ctx.beginPath(); ctx.moveTo(pad.l+i*gW/4, pad.t); ctx.lineTo(pad.l+i*gW/4, H-pad.b); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(pad.l, pad.t+i*gH/4); ctx.lineTo(W-pad.r, pad.t+i*gH/4); ctx.stroke();
+  }
+
+  // Bright X axis (F=0 line)
+  ctx.strokeStyle = 'rgba(255,255,255,0.65)'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(pad.l, midY); ctx.lineTo(W-pad.r, midY); ctx.stroke();
+  // Bright Y axis (x=0 line)
+  ctx.strokeStyle = 'rgba(255,255,255,0.65)'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(midX, pad.t); ctx.lineTo(midX, H-pad.b); ctx.stroke();
+
+  // Axis arrows
+  ctx.fillStyle = 'rgba(255,255,255,0.75)';
+  ctx.beginPath(); ctx.moveTo(W-pad.r, midY);
+  ctx.lineTo(W-pad.r-7, midY-4); ctx.lineTo(W-pad.r-7, midY+4); ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(midX, pad.t);
+  ctx.lineTo(midX-4, pad.t+8); ctx.lineTo(midX+4, pad.t+8); ctx.closePath(); ctx.fill();
+
+  // X ticks + labels (position)
+  const xTickVals = [-3, -2, -1, 0, 1, 2, 3];
+  ctx.textAlign = 'center';
+  xTickVals.forEach(v => {
+    const px = midX + v/maxX*(gW/2);
+    ctx.strokeStyle = 'rgba(255,255,255,0.4)'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(px, midY-4); ctx.lineTo(px, midY+4); ctx.stroke();
+    ctx.fillStyle = 'rgba(210,210,240,0.75)'; ctx.font = '9.5px Space Mono,monospace';
+    ctx.fillText(v, px, midY+17);
+  });
+
+  // Y ticks + labels (force)
+  ctx.textAlign = 'right';
+  [-maxF, -maxF/2, 0, maxF/2, maxF].forEach(fv => {
+    const py = midY - fv/maxF*(gH/2);
+    ctx.strokeStyle = 'rgba(255,255,255,0.4)'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(pad.l-5, py); ctx.lineTo(pad.l, py); ctx.stroke();
+    if (Math.abs(fv) > 0.1) {
+      ctx.fillStyle = 'rgba(210,210,240,0.75)'; ctx.font = '9.5px Space Mono,monospace';
+      ctx.fillText(fv.toFixed(0)+'N', pad.l-8, py+4);
+    }
+  });
+
+  // Axis labels
+  ctx.fillStyle = 'rgba(255,255,255,0.8)'; ctx.font = 'bold 11px Space Mono,monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText('x (m)', W-pad.r-12, midY-8);
+  ctx.save();
+  ctx.translate(11, midY);
+  ctx.rotate(-Math.PI/2);
+  ctx.fillText('F (N)', 0, 0);
+  ctx.restore();
+
+  // F = -kx line
+  ctx.beginPath(); ctx.strokeStyle='#f72585'; ctx.lineWidth=2.5;
+  ctx.shadowColor='#f72585'; ctx.shadowBlur=10;
+  for (let xi=-maxX; xi<=maxX; xi+=0.02) {
+    const F = -k*xi;
+    const px = midX + xi/maxX*(gW/2);
+    const py = midY - F/maxF*(gH/2);
+    if (xi===-maxX) ctx.moveTo(px,py); else ctx.lineTo(px,py);
+  }
+  ctx.stroke(); ctx.shadowBlur=0;
+
+  // Equation label
+  ctx.fillStyle='rgba(247,37,133,0.7)'; ctx.font='bold 10px Space Mono,monospace'; ctx.textAlign='left';
+  ctx.fillText('F = -kx', pad.l+6, pad.t+14);
+
+  // Current operating point
+  const F0 = -k*currentX;
+  const px0 = midX + currentX/maxX*(gW/2);
+  const py0 = midY - F0/maxF*(gH/2);
+  ctx.shadowColor='#00ffe7'; ctx.shadowBlur=14;
+  ctx.fillStyle='#00ffe7';
+  ctx.beginPath(); ctx.arc(px0, py0, 7, 0, Math.PI*2); ctx.fill();
+  ctx.shadowBlur=0;
+  ctx.strokeStyle='rgba(0,255,231,0.4)'; ctx.lineWidth=1; ctx.setLineDash([3,3]);
+  ctx.beginPath(); ctx.moveTo(px0, midY); ctx.lineTo(px0, py0); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(midX, py0); ctx.lineTo(px0, py0); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle='#00ffe7'; ctx.font='bold 11px Space Mono,monospace'; ctx.textAlign='left';
+  ctx.fillText('('+currentX.toFixed(2)+', '+F0.toFixed(1)+'N)', px0+10, py0-10);
+}
+function drawPhasePortrait(k, m, b, A) {
+  const canvas = document.getElementById('phaseCanvas');
+  if (!canvas) return;
+  canvas.width = canvas.offsetWidth || 700;
+  const ctx = canvas.getContext('2d'), W = canvas.width, H = canvas.height || 200;
+  ctx.fillStyle = '#0d1b3e'; ctx.fillRect(0,0,W,H);
+  const om = Math.sqrt(k/m);
+  const Vmax = A*om;
+  const pad = {l:52, r:16, t:16, b:36};
+  const gW = W-pad.l-pad.r, gH = H-pad.t-pad.b;
+  const midX = pad.l + gW/2, midY = pad.t + gH/2;
+
+  // Grid
+  ctx.strokeStyle = 'rgba(255,255,255,0.05)'; ctx.lineWidth = 1;
+  for (let i=0; i<=4; i++) {
+    ctx.beginPath(); ctx.moveTo(pad.l+i*gW/4, pad.t); ctx.lineTo(pad.l+i*gW/4, H-pad.b); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(pad.l, pad.t+i*gH/4); ctx.lineTo(W-pad.r, pad.t+i*gH/4); ctx.stroke();
+  }
+
+  // Bright X axis (v=0 / position axis)
+  ctx.strokeStyle = 'rgba(255,255,255,0.65)'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(pad.l, midY); ctx.lineTo(W-pad.r, midY); ctx.stroke();
+  // Bright Y axis (x=0 / velocity axis)
+  ctx.strokeStyle = 'rgba(255,255,255,0.65)'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(midX, pad.t); ctx.lineTo(midX, H-pad.b); ctx.stroke();
+
+  // Axis arrows
+  ctx.fillStyle = 'rgba(255,255,255,0.75)';
+  ctx.beginPath(); ctx.moveTo(W-pad.r, midY);
+  ctx.lineTo(W-pad.r-7, midY-4); ctx.lineTo(W-pad.r-7, midY+4); ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(midX, pad.t);
+  ctx.lineTo(midX-4, pad.t+8); ctx.lineTo(midX+4, pad.t+8); ctx.closePath(); ctx.fill();
+
+  // X ticks + labels
+  const xTickVals = [-A, -A/2, 0, A/2, A];
+  ctx.textAlign = 'center';
+  xTickVals.forEach(v => {
+    const px = midX + v/A*(gW/2);
+    ctx.strokeStyle = 'rgba(255,255,255,0.4)'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(px, midY-4); ctx.lineTo(px, midY+4); ctx.stroke();
+    if (Math.abs(v) > 0.001) {
+      ctx.fillStyle = 'rgba(210,210,240,0.75)'; ctx.font = '9px Space Mono,monospace';
+      ctx.fillText(v.toFixed(1), px, midY+16);
+    }
+  });
+
+  // Y ticks + labels  
+  const vTickVals = [Vmax, Vmax/2, 0, -Vmax/2, -Vmax];
+  ctx.textAlign = 'right';
+  vTickVals.forEach(vv => {
+    const py = midY - vv/Vmax*(gH/2);
+    ctx.strokeStyle = 'rgba(255,255,255,0.4)'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(midX-4, py); ctx.lineTo(midX+4, py); ctx.stroke();
+    if (Math.abs(vv) > 0.001) {
+      ctx.fillStyle = 'rgba(210,210,240,0.75)'; ctx.font = '9px Space Mono,monospace';
+      ctx.fillText(vv.toFixed(1), midX-8, py+4);
+    }
+  });
+
+  // Axis labels
+  ctx.fillStyle = 'rgba(255,255,255,0.8)'; ctx.font = 'bold 11px Space Mono,monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText('x (m)', W-pad.r-12, midY-8);
+  ctx.save();
+  ctx.translate(11, midY);
+  ctx.rotate(-Math.PI/2);
+  ctx.fillText('v (m/s)', 0, 0);
+  ctx.restore();
+
+  // Phase ellipse/spiral
+  ctx.beginPath(); ctx.strokeStyle='#9b5de5'; ctx.lineWidth=2.2;
+  ctx.shadowColor='#9b5de5'; ctx.shadowBlur=12;
+  const steps = 400;
+  for (let s=0; s<=steps; s++) {
+    const th = s/steps * 2*Math.PI;
+    const bm = b/(2*m);
+    const r = A*Math.exp(-bm*(th/(2*Math.PI))*2);
+    const xi = r*Math.cos(th);
+    const vi = -r*om*Math.sin(th);
+    const px = midX + xi*(gW/2)/A;
+    const py = midY - vi*(gH/2)/Vmax;
+    if (s===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
+  }
+  ctx.stroke(); ctx.shadowBlur=0;
+  // Direction arrow on orbit
+  ctx.fillStyle = '#9b5de5';
+  const arrowTh = Math.PI * 0.5;
+  const bm2 = b/(2*m);
+  const r2 = A*Math.exp(-bm2*(arrowTh/(2*Math.PI))*2);
+  const ax0 = midX + r2*Math.cos(arrowTh)*(gW/2)/A;
+  const ay0 = midY - (-r2*om*Math.sin(arrowTh))*(gH/2)/Vmax;
+  ctx.font = '14px sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText('↺', ax0, ay0);
+}
+// ==================== GRAPH LAB ====================
+function updateGraphs() {
+  const k = +document.getElementById('gl-k').value;
+  const m = +document.getElementById('gl-m').value;
+  const A = +document.getElementById('gl-a').value;
+  const b = +document.getElementById('gl-b').value;
+  document.getElementById('gl-k-val').textContent = k + ' N/m';
+  document.getElementById('gl-m-val').textContent = m.toFixed(1) + ' kg';
+  document.getElementById('gl-a-val').textContent = A.toFixed(2) + ' m';
+  document.getElementById('gl-b-val').textContent = b.toFixed(1) + ' Ns/m';
+  const om0 = Math.sqrt(k/m);
+  const bm = b/(2*m);
+  const om_d = Math.max(0.01, Math.sqrt(Math.max(0, om0*om0 - bm*bm)));
+  const T = 2*Math.PI/om_d;
+  const f = 1/T;
+  document.getElementById('gl-omega').textContent = om0.toFixed(3) + ' rad/s';
+  document.getElementById('gl-T').textContent = T.toFixed(3) + ' s';
+  document.getElementById('gl-freq').textContent = f.toFixed(3) + ' Hz';
+  const tEnd = Math.min(T*5, 30);
+  const steps = 800;
+  const dt2 = tEnd/steps;
+  const ts = [], xs = [], vs = [], as2 = [], pes = [], kes = [];
+  for (let i=0;i<=steps;i++) {
+    const ti = i*dt2;
+    const decay = Math.exp(-bm*ti);
+    const xi = A*decay*Math.cos(om_d*ti);
+    const vi = A*decay*(-bm*Math.cos(om_d*ti) - om_d*Math.sin(om_d*ti));
+    const ai = -k/m*xi - b/m*vi;
+    ts.push(ti); xs.push(xi); vs.push(vi); as2.push(ai);
+    pes.push(0.5*k*xi*xi); kes.push(0.5*m*vi*vi);
+  }
+  drawLineGraph('g-xt', ts, [{d:xs,c:'#00ffe7',l:'x(t)'}], tEnd, A*1.3, 'displacement x (m)');
+  drawLineGraph('g-vt', ts, [{d:vs,c:'#f72585',l:'v(t)'}], tEnd, A*om0*1.3, 'velocity v (m/s)');
+  drawLineGraph('g-at', ts, [{d:as2,c:'#f9c74f',l:'a(t)'}], tEnd, A*om0*om0*1.3, 'acceleration a (m/s²)');
+  drawLineGraph('g-et', ts, [{d:pes,c:'#f72585',l:'PE'},{d:kes,c:'#00ffe7',l:'KE'}], tEnd, 0.5*k*A*A*1.2, 'energy (J)');
+  // Force vs Time
+  const fts = xs.map(xi => -k*xi);
+  const fMax = k*A*1.3;
+  drawLineGraph('g-ft', ts, [{d:fts,c:'#f72585',l:'F(t)=-kx'}], tEnd, fMax, 'F (N)');
+  // Phase
+  drawPhaseFromData('g-phase', xs, vs, A, A*om0);
+  // T vs m
+  drawTvsMGraph('g-tm', k);
+}
+function drawLineGraph(id, ts, datasets, tMax, yMax, ylabel) {
+  const canvas = document.getElementById(id);
+  if (!canvas) return;
+  canvas.width = canvas.offsetWidth || 500;
+  const ctx = canvas.getContext('2d'), W = canvas.width, H = canvas.height || 180;
+  ctx.fillStyle = '#0d1b3e'; ctx.fillRect(0,0,W,H);
+  const pad = {l:52, r:16, t:16, b:36};
+  const gW = W-pad.l-pad.r, gH = H-pad.t-pad.b;
+  const midY = pad.t + gH/2;
+
+  // Grid lines (subtle)
+  ctx.strokeStyle = 'rgba(255,255,255,0.05)'; ctx.lineWidth = 1;
+  for (let i=0; i<=4; i++) {
+    const y = pad.t + i*gH/4;
+    ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(W-pad.r, y); ctx.stroke();
+  }
+  for (let i=0; i<=5; i++) {
+    const x = pad.l + i*gW/5;
+    ctx.beginPath(); ctx.moveTo(x, pad.t); ctx.lineTo(x, H-pad.b); ctx.stroke();
+  }
+
+  // Bright X-axis (zero line)
+  ctx.strokeStyle = 'rgba(255,255,255,0.65)'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(pad.l, midY); ctx.lineTo(W-pad.r, midY); ctx.stroke();
+  // Bright Y-axis
+  ctx.strokeStyle = 'rgba(255,255,255,0.65)'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(pad.l, pad.t); ctx.lineTo(pad.l, H-pad.b); ctx.stroke();
+
+  // Axis arrows
+  ctx.fillStyle = 'rgba(255,255,255,0.75)';
+  ctx.beginPath(); ctx.moveTo(W-pad.r, midY);
+  ctx.lineTo(W-pad.r-7, midY-4); ctx.lineTo(W-pad.r-7, midY+4); ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(pad.l, pad.t);
+  ctx.lineTo(pad.l-4, pad.t+8); ctx.lineTo(pad.l+4, pad.t+8); ctx.closePath(); ctx.fill();
+
+  // Y-axis tick marks + labels
+  const yLabels = [yMax, yMax/2, 0, -yMax/2, -yMax];
+  for (let i=0; i<=4; i++) {
+    const y = pad.t + i*gH/4;
+    ctx.strokeStyle = 'rgba(255,255,255,0.4)'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(pad.l-5, y); ctx.lineTo(pad.l, y); ctx.stroke();
+    ctx.fillStyle = 'rgba(210,210,240,0.85)'; ctx.font = 'bold 9.5px Space Mono,monospace';
+    ctx.textAlign = 'right';
+    ctx.fillText(yLabels[i].toFixed(2), pad.l-8, y+4);
+  }
+  // X-axis tick marks + labels
+  ctx.textAlign = 'center';
+  for (let i=0; i<=5; i++) {
+    const px = pad.l + i*gW/5;
+    ctx.strokeStyle = 'rgba(255,255,255,0.4)'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(px, H-pad.b); ctx.lineTo(px, H-pad.b+5); ctx.stroke();
+    ctx.fillStyle = 'rgba(210,210,240,0.75)'; ctx.font = '9.5px Space Mono,monospace';
+    ctx.fillText((tMax*i/5).toFixed(1), px, H-pad.b+17);
+  }
+
+  // Axis labels
+  ctx.fillStyle = 'rgba(255,255,255,0.8)'; ctx.font = 'bold 11px Space Mono,monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText('t (s)', W-pad.r-10, H-2);
+  ctx.save();
+  ctx.translate(11, midY);
+  ctx.rotate(-Math.PI/2);
+  ctx.fillText(ylabel, 0, 0);
+  ctx.restore();
+
+  // Plot data curves
+  datasets.forEach(ds => {
+    ctx.beginPath(); ctx.strokeStyle = ds.c; ctx.lineWidth = 2.2;
+    ctx.shadowColor = ds.c; ctx.shadowBlur = 7;
+    for (let i=0;i<ts.length;i++) {
+      const px = pad.l + (ts[i]/tMax)*gW;
+      const py = midY - (ds.d[i]/yMax)*(gH/2);
+      if (i===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
+    }
+    ctx.stroke(); ctx.shadowBlur=0;
+  });
+
+  // Legend
+  let lx = pad.l + 8;
+  datasets.forEach((ds,i) => {
+    ctx.fillStyle=ds.c; ctx.font='bold 10px Space Mono,monospace'; ctx.textAlign='left';
+    const label = '━ '+ds.l;
+    ctx.fillText(label, lx, pad.t+13);
+    lx += ctx.measureText(label).width + 16;
+  });
+}
+function drawPhaseFromData(id, xs, vs, xMax, vMax) {
+  const canvas = document.getElementById(id);
+  if (!canvas) return;
+  canvas.width = canvas.offsetWidth || 500;
+  const ctx = canvas.getContext('2d'), W = canvas.width, H = canvas.height || 180;
+  ctx.fillStyle = '#0d1b3e'; ctx.fillRect(0,0,W,H);
+  const pad = {l:52, r:16, t:16, b:36};
+  const gW = W-pad.l-pad.r, gH = H-pad.t-pad.b;
+  const midX = pad.l + gW/2, midY = pad.t + gH/2;
+
+  // Grid
+  ctx.strokeStyle = 'rgba(255,255,255,0.05)'; ctx.lineWidth = 1;
+  for (let i=0; i<=4; i++) {
+    ctx.beginPath(); ctx.moveTo(pad.l+i*gW/4, pad.t); ctx.lineTo(pad.l+i*gW/4, H-pad.b); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(pad.l, pad.t+i*gH/4); ctx.lineTo(W-pad.r, pad.t+i*gH/4); ctx.stroke();
+  }
+
+  // Bright X axis (v=0 line)
+  ctx.strokeStyle = 'rgba(255,255,255,0.65)'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(pad.l, midY); ctx.lineTo(W-pad.r, midY); ctx.stroke();
+  // Bright Y axis (x=0 line)
+  ctx.strokeStyle = 'rgba(255,255,255,0.65)'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(midX, pad.t); ctx.lineTo(midX, H-pad.b); ctx.stroke();
+
+  // Arrows on axes
+  ctx.fillStyle = 'rgba(255,255,255,0.75)';
+  ctx.beginPath(); ctx.moveTo(W-pad.r, midY);
+  ctx.lineTo(W-pad.r-7, midY-4); ctx.lineTo(W-pad.r-7, midY+4); ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(midX, pad.t);
+  ctx.lineTo(midX-4, pad.t+8); ctx.lineTo(midX+4, pad.t+8); ctx.closePath(); ctx.fill();
+
+  // X ticks + labels (position axis)
+  ctx.textAlign = 'center';
+  const xTickVals = [-xMax, -xMax/2, 0, xMax/2, xMax];
+  xTickVals.forEach(v => {
+    const px = midX + v/xMax*(gW/2);
+    ctx.strokeStyle = 'rgba(255,255,255,0.4)'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(px, midY-4); ctx.lineTo(px, midY+4); ctx.stroke();
+    if (Math.abs(v) > 0.001) {
+      ctx.fillStyle = 'rgba(210,210,240,0.75)'; ctx.font = '9px Space Mono,monospace';
+      ctx.fillText(v.toFixed(1), px, midY+16);
+    }
+  });
+
+  // Y ticks + labels (velocity axis)
+  ctx.textAlign = 'right';
+  const vTickVals = [vMax, vMax/2, 0, -vMax/2, -vMax];
+  vTickVals.forEach(vv => {
+    const py = midY - vv/vMax*(gH/2);
+    ctx.strokeStyle = 'rgba(255,255,255,0.4)'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(midX-4, py); ctx.lineTo(midX+4, py); ctx.stroke();
+    if (Math.abs(vv) > 0.001) {
+      ctx.fillStyle = 'rgba(210,210,240,0.75)'; ctx.font = '9px Space Mono,monospace';
+      ctx.fillText(vv.toFixed(1), midX-8, py+4);
+    }
+  });
+
+  // Axis labels
+  ctx.fillStyle = 'rgba(255,255,255,0.8)'; ctx.font = 'bold 11px Space Mono,monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText('x (m)', W-pad.r-12, midY-8);
+  ctx.save();
+  ctx.translate(11, midY);
+  ctx.rotate(-Math.PI/2);
+  ctx.fillText('v (m/s)', 0, 0);
+  ctx.restore();
+
+  // Plot the phase spiral
+  const n = xs.length;
+  for (let i=1; i<n; i++) {
+    const t_frac = i/n;
+    const r = Math.floor(155+100*t_frac), b2 = Math.floor(229-100*t_frac);
+    ctx.strokeStyle = `rgba(${r},93,${b2},0.9)`; ctx.lineWidth = 1.8;
+    ctx.shadowColor = `rgb(${r},93,${b2})`; ctx.shadowBlur = 4;
+    ctx.beginPath();
+    ctx.moveTo(midX+xs[i-1]/xMax*(gW/2), midY-vs[i-1]/vMax*(gH/2));
+    ctx.lineTo(midX+xs[i]/xMax*(gW/2), midY-vs[i]/vMax*(gH/2));
+    ctx.stroke();
+  }
+  ctx.shadowBlur = 0;
+
+  // Corner label
+  ctx.fillStyle = 'rgba(155,93,229,0.7)'; ctx.font = 'bold 10px Space Mono,monospace'; ctx.textAlign = 'left';
+  ctx.fillText('phase portrait', pad.l+4, pad.t+13);
+}
+function drawTvsMGraph(id, k) {
+  const canvas = document.getElementById(id);
+  if (!canvas) return;
+  canvas.width = canvas.offsetWidth || 500;
+  const ctx = canvas.getContext('2d'), W = canvas.width, H = canvas.height || 180;
+  ctx.fillStyle='#0d1b3e'; ctx.fillRect(0,0,W,H);
+  const pad=40;
+  const mMax=10, mMin=0.1;
+  const Tvals = [], mvals = [];
+  for (let mi=mMin;mi<=mMax;mi+=0.05) {
+    mvals.push(mi);
+    Tvals.push(2*Math.PI*Math.sqrt(mi/k));
+  }
+  const TMax = Tvals[Tvals.length-1];
+  ctx.strokeStyle='rgba(255,255,255,0.1)'; ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(pad,10);ctx.lineTo(pad,H-pad);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(pad,H-pad);ctx.lineTo(W-10,H-pad);ctx.stroke();
+  ctx.fillStyle='#888';ctx.font='9px Space Mono';
+  ctx.fillText('m (kg) →',W-50,H-pad+14);ctx.fillText('T (s) ↑',pad-30,16);
+  ctx.beginPath(); ctx.strokeStyle='#43ea80'; ctx.lineWidth=2.5;
+  ctx.shadowColor='#43ea80'; ctx.shadowBlur=8;
+  for (let i=0;i<mvals.length;i++) {
+    const px = pad + (mvals[i]-mMin)/(mMax-mMin)*(W-pad-10);
+    const py = H - pad - (Tvals[i]/TMax)*(H-pad-20);
+    if (i===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
+  }
+  ctx.stroke(); ctx.shadowBlur=0;
+  ctx.fillStyle='#43ea80'; ctx.font='10px Space Mono'; ctx.fillText('T=2π√(m/k)',W-100,20);
+}
+// ==================== DESC GRAPHS ====================
+function drawDescGraphs() {
+  const k=40, m=1, A=1, b=0;
+  const om=Math.sqrt(k/m);
+  const T=2*Math.PI/om;
+  const tEnd=T*2, steps=400, dt2=tEnd/steps;
+  const ts=[],xs=[],vs=[],as2=[];
+  for(let i=0;i<=steps;i++){
+    const ti=i*dt2;
+    xs.push(A*Math.cos(om*ti));
+    vs.push(-A*om*Math.sin(om*ti));
+    as2.push(-A*om*om*Math.cos(om*ti));
+    ts.push(ti);
+  }
+  const pes=xs.map(x=>0.5*k*x*x);
+  const kes=vs.map(v=>0.5*m*v*v);
+  const c1 = document.getElementById('desc-allgraph');
+  if(c1){ c1.width=c1.offsetWidth||500; drawDescAll(c1,ts,xs,vs,as2,tEnd,A,A*om,A*om*om); }
+  const c2 = document.getElementById('desc-energy');
+  if(c2){ c2.width=c2.offsetWidth||500; drawDescEnergy(c2,ts,pes,kes,tEnd,0.5*k*A*A); }
+}
+function drawDescAll(canvas,ts,xs,vs,as2,tEnd,xM,vM,aM){
+  const ctx=canvas.getContext('2d'),W=canvas.width,H=canvas.height||220;
+  ctx.fillStyle='#0d1b3e';ctx.fillRect(0,0,W,H);
+  const pad=40;
+  const gW=W-pad-10, gH=H-20;
+  const midY=H/2;
+  ctx.strokeStyle='rgba(255,255,255,0.1)';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(pad,midY);ctx.lineTo(W-10,midY);ctx.stroke();
+  const drawC=(data,max,color,lbl)=>{
+    ctx.beginPath();ctx.strokeStyle=color;ctx.lineWidth=2;
+    ctx.shadowColor=color;ctx.shadowBlur=6;
+    for(let i=0;i<ts.length;i++){
+      const px=pad+(ts[i]/tEnd)*gW;
+      const py=midY-(data[i]/max)*(gH/2-10);
+      if(i===0)ctx.moveTo(px,py);else ctx.lineTo(px,py);
+    }
+    ctx.stroke();ctx.shadowBlur=0;
+  };
+  drawC(xs,xM,'#00ffe7','x');
+  drawC(vs,vM,'#f72585','v');
+  drawC(as2,aM,'#f9c74f','a');
+  ctx.font='9px Space Mono';
+  [['x(t)','#00ffe7',0],['v(t)','#f72585',1],['a(t)','#f9c74f',2]].forEach(([l,c,i])=>{
+    ctx.fillStyle=c; ctx.fillText('▬ '+l, pad+i*60, 14);
+  });
+}
+function drawDescEnergy(canvas,ts,pes,kes,tEnd,eMax){
+  const ctx=canvas.getContext('2d'),W=canvas.width,H=canvas.height||220;
+  ctx.fillStyle='#0d1b3e';ctx.fillRect(0,0,W,H);
+  const pad=40;
+  const gW=W-pad-10,gH=H-20;
+  const fill=(data,color)=>{
+    ctx.beginPath();ctx.strokeStyle=color;ctx.lineWidth=2;
+    ctx.shadowColor=color;ctx.shadowBlur=8;
+    for(let i=0;i<ts.length;i++){
+      const px=pad+(ts[i]/tEnd)*gW;
+      const py=H-10-(data[i]/eMax)*(gH-10);
+      if(i===0)ctx.moveTo(px,py);else ctx.lineTo(px,py);
+    }
+    ctx.stroke();ctx.shadowBlur=0;
+  };
+  fill(pes,'#f72585');fill(kes,'#00ffe7');
+  const total=pes.map((p,i)=>p+kes[i]);
+  ctx.beginPath();ctx.strokeStyle='#f9c74f';ctx.lineWidth=1.5;ctx.setLineDash([4,3]);
+  for(let i=0;i<ts.length;i++){
+    const px=pad+(ts[i]/tEnd)*gW;
+    const py=H-10-(total[i]/eMax)*(gH-10);
+    if(i===0)ctx.moveTo(px,py);else ctx.lineTo(px,py);
+  }
+  ctx.stroke();ctx.setLineDash([]);
+  ctx.font='9px Space Mono';
+  [['PE','#f72585',0],['KE','#00ffe7',1],['Total','#f9c74f',2]].forEach(([l,c,i])=>{
+    ctx.fillStyle=c;ctx.fillText('▬ '+l,pad+i*60,14);
+  });
+}
+// ==================== INIT ====================
+function init() {
+  sliderUpdate();
+  updateForceExplorer();
+  updateGraphs();
+  resetSim();
+  function loop() {
+    drawSim();
+    requestAnimationFrame(loop);
+  }
+  loop();
+}
+window.addEventListener('load', init);
+window.addEventListener('resize', () => {
+  updateGraphs();
+  updateForceExplorer();
+});
+</script>
+</body>
+</html>
